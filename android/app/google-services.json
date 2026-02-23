@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "838552672492",
+    "project_id": "fitassist-1bc95",
+    "storage_bucket": "fitassist-1bc95.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:838552672492:android:958f87d271aab14814adc9",
+        "android_client_info": {
+          "package_name": "com.example.fit_assist"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAA2adEAwzWJX3jTtILGeTtGkKW4l6dM5M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
