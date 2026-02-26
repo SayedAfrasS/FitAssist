@@ -24,8 +24,9 @@ class OnboardingLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
           // Background accents for continuity
@@ -37,7 +38,7 @@ class OnboardingLayout extends StatelessWidget {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.blue.shade900.withAlpha(40),
+                color: theme.primaryColor.withAlpha(20),
               ),
             ),
           ),
@@ -58,11 +59,11 @@ class OnboardingLayout extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: Colors.white.withAlpha(20),
+                              color: theme.cardColor,
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white.withAlpha(20)),
+                              border: Border.all(color: theme.dividerColor),
                             ),
-                            child: const Icon(Icons.arrow_back_ios_new, size: 16, color: Colors.white),
+                            child: Icon(Icons.arrow_back_ios_new, size: 16, color: theme.textTheme.titleLarge?.color),
                           ),
                         ),
                         const SizedBox(width: 20),
@@ -72,7 +73,7 @@ class OnboardingLayout extends StatelessWidget {
                               Container(
                                 height: 8,
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withAlpha(10),
+                                  color: theme.dividerColor,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
@@ -82,7 +83,7 @@ class OnboardingLayout extends StatelessWidget {
                                 width: (MediaQuery.of(context).size.width - 120) * (stepNumber / totalSteps),
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
-                                    colors: [Colors.blue.shade400, Colors.blue.shade700],
+                                    colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.7)],
                                   ),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
@@ -94,9 +95,9 @@ class OnboardingLayout extends StatelessWidget {
                         if (onSkip != null)
                           TextButton(
                             onPressed: onSkip,
-                            child: const Text(
+                            child: Text(
                               "Skip",
-                              style: TextStyle(color: Colors.white38, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: theme.hintColor, fontWeight: FontWeight.bold),
                             ),
                           )
                         else
@@ -111,7 +112,7 @@ class OnboardingLayout extends StatelessWidget {
                     "STEP $stepNumber OF $totalSteps",
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.blue.shade400,
+                      color: theme.primaryColor,
                       fontWeight: FontWeight.w900,
                       fontSize: 12,
                       letterSpacing: 2.0,
@@ -121,10 +122,10 @@ class OnboardingLayout extends StatelessWidget {
                   Text(
                     title,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w900,
-                      color: Colors.white,
+                      color: theme.textTheme.titleLarge?.color,
                       letterSpacing: -1.0,
                       height: 1.2,
                     ),
@@ -144,16 +145,16 @@ class OnboardingLayout extends StatelessWidget {
                         borderRadius: BorderRadius.circular(24),
                         gradient: isNextEnabled
                             ? LinearGradient(
-                                colors: [Colors.blue.shade700, Colors.blue.shade500],
+                                colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.8)],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               )
                             : null,
-                        color: isNextEnabled ? null : Colors.white.withAlpha(10),
+                        color: isNextEnabled ? null : theme.dividerColor,
                         boxShadow: isNextEnabled
                             ? [
                                 BoxShadow(
-                                  color: Colors.blue.shade800.withAlpha(60),
+                                  color: theme.primaryColor.withAlpha(60),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
                                 ),
@@ -169,7 +170,7 @@ class OnboardingLayout extends StatelessWidget {
                             child: Text(
                               "CONTINUE",
                               style: TextStyle(
-                                color: isNextEnabled ? Colors.white : Colors.white24,
+                                color: isNextEnabled ? Colors.white : theme.hintColor,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 2,

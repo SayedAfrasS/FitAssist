@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/onboarding_layout.dart';
 
 class OnboardingFlowScreen extends StatefulWidget {
@@ -13,6 +15,7 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
   int _currentStep = 1;
   final int _totalSteps = 6;
   bool _isNextEnabled = false;
+  bool _isLoading = false;
 
   // Storing selections for a professional profile
   String? _focusArea;
@@ -33,22 +36,62 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
     6: "Your body metrics",
   };
 
-  void _onNext() {
+  Future<void> _onNext() async {
     if (_currentStep < _totalSteps) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeOutQuart,
       );
     } else {
-      Navigator.pushReplacementNamed(
-        context, 
-        '/home',
-        arguments: {
-          'goal': _goal,
-          'focusArea': _focusArea,
-          'activityLevel': _activityLevel,
-        },
-      );
+      // Save data to Firestore before finishing
+      setState(() => _isLoading = true);
+      
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          final height = double.tryParse(_heightController.text) ?? 0;
+          final weight = double.tryParse(_weightController.text) ?? 0;
+          
+          double bmi = 0;
+          if (height > 0) {
+            final hMeters = height / 100;
+            bmi = weight / (hMeters * hMeters);
+          }
+
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+            'focusArea': _focusArea,
+            'activityLevel': _activityLevel,
+            'goal': _goal,
+            'motivation': _motivation,
+            'gender': _gender,
+            'height': height,
+            'weight': weight,
+            'bmi': bmi,
+            'onboardingCompleted': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+
+          if (mounted) {
+            Navigator.pushReplacementNamed(
+              context, 
+              '/home',
+              arguments: {
+                'goal': _goal,
+                'focusArea': _focusArea,
+                'activityLevel': _activityLevel,
+              },
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error saving profile: $e")),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -86,25 +129,36 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
       stepNumber: _currentStep,
       totalSteps: _totalSteps,
       title: _stepTitles[_currentStep] ?? "Tell us about yourself",
-      isNextEnabled: _isNextEnabled,
+      isNextEnabled: _isNextEnabled && !_isLoading,
       onNext: _onNext,
       onBack: _onBack,
-      child: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        onPageChanged: (index) {
-          setState(() {
-            _currentStep = index + 1;
-            _checkButtonState();
-          });
-        },
+      child: Stack(
         children: [
-          _buildFocusAreaStep(),
-          _buildActivityStep(),
-          _buildGoalStep(),
-          _buildMotivationStep(),
-          _buildGenderStep(),
-          _buildMetricsStep(),
+          PageView(
+            controller: _pageController,
+            physics: const NeverScrollableScrollPhysics(),
+            onPageChanged: (index) {
+              setState(() {
+                _currentStep = index + 1;
+                _checkButtonState();
+              });
+            },
+            children: [
+              _buildFocusAreaStep(),
+              _buildActivityStep(),
+              _buildGoalStep(),
+              _buildMotivationStep(),
+              _buildGenderStep(),
+              _buildMetricsStep(),
+            ],
+          ),
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.5),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
         ],
       ),
     );
@@ -165,6 +219,7 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
 
   // --- Step 6: Metrics ---
   Widget _buildMetricsStep() {
+    final theme = Theme.of(context);
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Column(
@@ -189,20 +244,20 @@ class _OnboardingFlowScreenState extends State<OnboardingFlowScreen> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.blue.withAlpha(20),
+              color: theme.primaryColor.withAlpha(20),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.blue.withAlpha(30)),
+              border: Border.all(color: theme.primaryColor.withAlpha(30)),
             ),
             child: Row(
               children: [
-                Icon(Icons.auto_fix_high_rounded, color: Colors.blue.shade400, size: 28),
+                Icon(Icons.auto_fix_high_rounded, color: theme.primaryColor, size: 28),
                 const SizedBox(width: 16),
-                const Expanded(
+                Expanded(
                   child: Text(
                     "Our AI uses these metrics to generate your optimal metabolic training profile.",
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.white70,
+                      color: theme.textTheme.bodyMedium?.color,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -263,6 +318,7 @@ class _SelectionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -270,20 +326,20 @@ class _SelectionTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.blue.shade600.withAlpha(40) : Colors.white.withAlpha(10),
+          color: isSelected ? theme.primaryColor.withAlpha(40) : theme.cardColor,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isSelected ? Colors.blue.shade400 : Colors.white.withAlpha(20),
+            color: isSelected ? theme.primaryColor : theme.dividerColor,
             width: 2,
           ),
-          boxShadow: isSelected ? [BoxShadow(color: Colors.blue.withAlpha(30), blurRadius: 15, offset: const Offset(0, 8))] : [],
+          boxShadow: isSelected ? [BoxShadow(color: theme.primaryColor.withAlpha(30), blurRadius: 15, offset: const Offset(0, 8))] : [],
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isSelected ? Colors.blue : Colors.white.withAlpha(10),
+                color: isSelected ? theme.primaryColor : theme.scaffoldBackgroundColor,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(icon, color: Colors.white, size: 24),
@@ -295,24 +351,24 @@ class _SelectionTile extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
-                      color: Colors.white,
+                      color: theme.textTheme.titleLarge?.color,
                     ),
                   ),
                   if (sub != null) ...[
                     const SizedBox(height: 4),
                     Text(
                       sub!,
-                      style: const TextStyle(fontSize: 13, color: Colors.white54, fontWeight: FontWeight.w500),
+                      style: TextStyle(fontSize: 13, color: theme.hintColor, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ],
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle_rounded, color: Colors.blue, size: 24),
+              Icon(Icons.check_circle_rounded, color: theme.primaryColor, size: 24),
           ],
         ),
       ),
@@ -337,16 +393,17 @@ class _MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(10),
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withAlpha(20), width: 1.5),
+        border: Border.all(color: theme.dividerColor, width: 1.5),
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.blue.shade400, size: 28),
+          Icon(icon, color: theme.primaryColor, size: 28),
           const SizedBox(width: 24),
           Expanded(
             child: Column(
@@ -354,9 +411,9 @@ class _MetricCard extends StatelessWidget {
               children: [
                 Text(
                   label.toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white38,
+                    color: theme.hintColor,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1,
                   ),
@@ -365,15 +422,15 @@ class _MetricCard extends StatelessWidget {
                   controller: controller,
                   keyboardType: TextInputType.number,
                   onChanged: onChanged,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                    color: theme.textTheme.titleLarge?.color,
                   ),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: "00",
-                    hintStyle: TextStyle(color: Colors.white10),
+                    hintStyle: TextStyle(color: theme.dividerColor),
                   ),
                 ),
               ],
@@ -384,7 +441,7 @@ class _MetricCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w900,
-              color: Colors.blue.shade400,
+              color: theme.primaryColor,
             ),
           ),
         ],

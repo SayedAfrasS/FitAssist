@@ -64,111 +64,150 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
-          Positioned.fill(
-            child: Container(color: const Color(0xFF0F172A)),
-          ),
+          // Dynamic Background Accent
           Positioned(
-            top: -50,
-            left: -50,
+            top: -100,
+            left: -100,
             child: Container(
-              width: 250,
-              height: 250,
+              width: 300,
+              height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.blue.shade900.withAlpha(50),
+                color: theme.primaryColor.withAlpha(20),
               ),
             ),
           ),
+          
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 30),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-                      onPressed: () => Navigator.pop(context),
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: theme.cardColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: theme.dividerColor),
+                        ),
+                        child: Icon(Icons.arrow_back_ios_new_rounded, color: theme.primaryColor, size: 16),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    "Join the\nMovement",
+                  const SizedBox(height: 32),
+                  Text(
+                    "Create\nAccount",
                     style: TextStyle(
                       fontSize: 48, 
                       fontWeight: FontWeight.w900, 
-                      color: Colors.white, 
-                      letterSpacing: -2,
+                      color: theme.textTheme.titleLarge?.color, 
+                      letterSpacing: -2.5,
                       height: 1.0,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "Your personal AI fitness coach is waiting.",
-                    style: TextStyle(fontSize: 16, color: Colors.white60, fontWeight: FontWeight.w500),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Start your transformation today.",
+                    style: TextStyle(fontSize: 15, color: theme.hintColor, fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(height: 50),
+                  const SizedBox(height: 48),
 
-                  _buildGlassField(
-                    controller: _emailController,
-                    hint: "Email Address",
-                    icon: Icons.alternate_email_rounded,
-                    keyboardType: TextInputType.emailAddress,
+                  // Form Container
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: theme.cardColor,
+                      borderRadius: BorderRadius.circular(32),
+                      border: Border.all(color: theme.dividerColor),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildGlassField(
+                          theme: theme,
+                          controller: _emailController,
+                          hint: "Email Address",
+                          icon: Icons.alternate_email_rounded,
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: 20),
+                        _buildGlassField(
+                          theme: theme,
+                          controller: _passwordController,
+                          hint: "Password",
+                          icon: Icons.lock_outline_rounded,
+                          isPassword: true,
+                          obscureText: _obscurePassword,
+                          onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildGlassField(
+                          theme: theme,
+                          controller: _confirmPasswordController,
+                          hint: "Confirm Password",
+                          icon: Icons.lock_reset_rounded,
+                          isPassword: true,
+                          obscureText: _obscurePassword,
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 20),
 
-                  _buildGlassField(
-                    controller: _passwordController,
-                    hint: "Password",
-                    icon: Icons.lock_outline_rounded,
-                    isPassword: true,
-                    obscureText: _obscurePassword,
-                    onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
-                  ),
-                  const SizedBox(height: 20),
-
-                  _buildGlassField(
-                    controller: _confirmPasswordController,
-                    hint: "Confirm Password",
-                    icon: Icons.lock_reset_rounded,
-                    isPassword: true,
-                    obscureText: _obscurePassword,
-                  ),
-
-                  const SizedBox(height: 50),
+                  const SizedBox(height: 40),
 
                   ElevatedButton(
                     onPressed: _isLoading ? null : _signup,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF0F172A),
-                      minimumSize: const Size(double.infinity, 64),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      backgroundColor: theme.primaryColor,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 70),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                       elevation: 0,
                     ),
                     child: _isLoading 
-                      ? const CircularProgressIndicator(color: Colors.blue)
-                      : const Text("GENERATE ACCOUNT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                      ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+                      : const Text("CREATE PROFILE", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 2)),
                   ),
                   
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 40),
                   
-                  const Center(
+                  Center(
                     child: Column(
                       children: [
                         Text(
-                          "By continuing, you agree to our",
-                          style: TextStyle(color: Colors.white38, fontSize: 13),
+                          "Secured by 256-bit encryption",
+                          style: TextStyle(color: theme.hintColor, fontSize: 12, fontWeight: FontWeight.bold),
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          "Terms & Conditions",
-                          style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 13),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(width: 40, height: 1, color: theme.dividerColor),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text("LEGAL", style: TextStyle(color: theme.hintColor, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 2)),
+                            ),
+                            Container(width: 40, height: 1, color: theme.dividerColor),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text("Terms", style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold, fontSize: 13)),
+                            const SizedBox(width: 20),
+                            Text("Privacy", style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.bold, fontSize: 13)),
+                          ],
                         ),
                       ],
                     ),
@@ -184,6 +223,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Widget _buildGlassField({
+    required ThemeData theme,
     required TextEditingController controller,
     required String hint,
     required IconData icon,
@@ -194,26 +234,26 @@ class _SignupScreenState extends State<SignupScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(20),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withAlpha(40), width: 1.5),
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.dividerColor, width: 1.5),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: TextField(
         controller: controller,
         obscureText: obscureText,
         keyboardType: keyboardType,
-        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 17),
+        style: TextStyle(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color, fontSize: 17),
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hint,
-          hintStyle: const TextStyle(color: Colors.white38, fontWeight: FontWeight.w500),
-          icon: Icon(icon, color: Colors.blue.shade400, size: 24),
+          hintStyle: TextStyle(color: theme.hintColor, fontWeight: FontWeight.w500),
+          icon: Icon(icon, color: theme.primaryColor, size: 24),
           suffixIcon: isPassword && onToggle != null
             ? IconButton(
                 icon: Icon(
                   obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined, 
-                  color: Colors.white38,
+                  color: theme.hintColor,
                 ),
                 onPressed: onToggle,
               )

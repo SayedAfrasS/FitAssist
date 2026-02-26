@@ -135,7 +135,7 @@ class _WorkoutDayScreenState extends State<WorkoutDayScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => WorkoutPlayerScreen(exercises: _exercises),
+                  builder: (context) => WorkoutPlayerScreen(exercise: _exercises[0]),
                 ),
               );
             },

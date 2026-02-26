@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'signup_screen.dart';
 import 'onboarding_flow_screen.dart';
+import '../services/theme_manager.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -58,17 +59,50 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _showThemeDialog() {
+    final theme = Theme.of(context);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: theme.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        title: Text("Switch Appearance", style: TextStyle(color: theme.textTheme.titleLarge?.color, fontWeight: FontWeight.w900)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: ["Neo Dark", "Light Mode", "Amoled"].map((mode) {
+            final isSelected = ThemeManager().currentThemeName == mode;
+            return ListTile(
+              onTap: () {
+                ThemeManager().setTheme(mode);
+                Navigator.pop(context);
+              },
+              leading: Icon(
+                mode == "Light Mode" ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                color: isSelected ? theme.primaryColor : theme.hintColor,
+              ),
+              title: Text(
+                mode,
+                style: TextStyle(
+                  color: isSelected ? theme.primaryColor : theme.textTheme.bodyLarge?.color,
+                  fontWeight: isSelected ? FontWeight.w900 : FontWeight.w500,
+                ),
+              ),
+              trailing: isSelected ? Icon(Icons.check_circle_rounded, color: theme.primaryColor) : null,
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
-          // Background Mesh Gradient Effect
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(color: Color(0xFF0F172A)),
-            ),
-          ),
+          // Dynamic Background Accents
           Positioned(
             top: -100,
             right: -100,
@@ -77,147 +111,186 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.blue.shade600.withAlpha(80),
+                color: theme.primaryColor.withAlpha(20),
               ),
             ),
           ),
-          Positioned(
-            bottom: -50,
-            left: -50,
-            child: Container(
-              width: 250,
-              height: 250,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.indigo.shade800.withAlpha(60),
-              ),
-            ),
-          ),
-
+          
           SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 60),
-                  // Premium Logo
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Colors.blue.shade400, Colors.blue.shade800],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.blue.shade800.withAlpha(100),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(Icons.bolt_rounded, size: 50, color: Colors.white),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  const Text(
-                    "Welcome Back",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 40, 
-                      fontWeight: FontWeight.w900, 
-                      color: Colors.white, 
-                      letterSpacing: -1.5,
-                      height: 1.1,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    "Sign in to reach your potential",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16, 
-                      color: Colors.white60, 
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 60),
-
-                  // Glassmorphism Fields
-                  _buildGlassField(
-                    controller: _emailController,
-                    hint: "Email Address",
-                    icon: Icons.alternate_email_rounded,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 20),
-                  _buildGlassField(
-                    controller: _passwordController,
-                    hint: "Password",
-                    icon: Icons.lock_outline_rounded,
-                    isPassword: true,
-                    obscureText: _obscurePassword,
-                    onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
-                  ),
-                  
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {},
-                      child: const Text(
-                        "Forgot Password?", 
-                        style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 40),
-
-                  // Neo-Brutalism Style Button
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade600,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 64),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      elevation: 0,
-                    ),
-                    child: _isLoading 
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          "LOGIN", 
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 2),
-                        ),
-                  ),
-
-                  const SizedBox(height: 40),
-                  
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+            child: Column(
+              children: [
+                // Top Action Bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      const Text("New here?", style: TextStyle(color: Colors.white54, fontWeight: FontWeight.w500)),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const SignupScreen()),
-                          );
-                        },
-                        child: const Text(
-                          "Create Account", 
-                          style: TextStyle(color: Colors.blue, fontWeight: FontWeight.w900, fontSize: 16),
+                      IconButton(
+                        onPressed: _showThemeDialog,
+                        icon: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: theme.cardColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: theme.dividerColor),
+                          ),
+                          child: Icon(Icons.palette_rounded, color: theme.primaryColor, size: 20),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 30),
-                ],
-              ),
+                ),
+                
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 20),
+                        // Premium Brand Identity
+                        Hero(
+                          tag: 'logo',
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.all(28),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.7)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(32),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: theme.primaryColor.withAlpha(60),
+                                    blurRadius: 30,
+                                    offset: const Offset(0, 15),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(Icons.bolt_rounded, size: 54, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 48),
+                        Text(
+                          "FitAssist",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 48, 
+                            fontWeight: FontWeight.w900, 
+                            color: theme.textTheme.titleLarge?.color, 
+                            letterSpacing: -2.0,
+                            height: 1.0,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          "YOUR ELITE ANALYTICS PARTNER",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12, 
+                            color: theme.hintColor, 
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2.0,
+                          ),
+                        ),
+                        const SizedBox(height: 54),
+
+                        // Form Container
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: theme.cardColor,
+                            borderRadius: BorderRadius.circular(32),
+                            border: Border.all(color: theme.dividerColor),
+                          ),
+                          child: Column(
+                            children: [
+                              _buildGlassField(
+                                theme: theme,
+                                controller: _emailController,
+                                hint: "Email Address",
+                                icon: Icons.alternate_email_rounded,
+                                keyboardType: TextInputType.emailAddress,
+                              ),
+                              const SizedBox(height: 20),
+                              _buildGlassField(
+                                theme: theme,
+                                controller: _passwordController,
+                                hint: "Password",
+                                icon: Icons.lock_outline_rounded,
+                                isPassword: true,
+                                obscureText: _obscurePassword,
+                                onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
+                              ),
+                              const SizedBox(height: 12),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: () {},
+                                  child: Text(
+                                    "Forgot Password?", 
+                                    style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.w900, fontSize: 13),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 32),
+
+                        ElevatedButton(
+                          onPressed: _isLoading ? null : _login,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.primaryColor,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 70),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                            elevation: 0,
+                            shadowColor: theme.primaryColor.withAlpha(100),
+                          ),
+                          child: _isLoading 
+                            ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                              )
+                            : const Text(
+                                "SIGN IN", 
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 2.5),
+                              ),
+                        ),
+
+                        const SizedBox(height: 48),
+                        
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text("New to the platform?", style: TextStyle(color: theme.hintColor, fontWeight: FontWeight.w600)),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const SignupScreen()),
+                                );
+                              },
+                              child: Text(
+                                "Join Now", 
+                                style: TextStyle(color: theme.primaryColor, fontWeight: FontWeight.w900, fontSize: 16),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 30),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -226,6 +299,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildGlassField({
+    required ThemeData theme,
     required TextEditingController controller,
     required String hint,
     required IconData icon,
@@ -236,26 +310,26 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(20),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withAlpha(40), width: 1.5),
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.dividerColor, width: 1.5),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: TextField(
         controller: controller,
         obscureText: obscureText,
         keyboardType: keyboardType,
-        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 17),
+        style: TextStyle(fontWeight: FontWeight.bold, color: theme.textTheme.bodyLarge?.color, fontSize: 17),
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: hint,
-          hintStyle: const TextStyle(color: Colors.white38, fontWeight: FontWeight.w500),
-          icon: Icon(icon, color: Colors.blue.shade400, size: 24),
+          hintStyle: TextStyle(color: theme.hintColor, fontWeight: FontWeight.w500),
+          icon: Icon(icon, color: theme.primaryColor, size: 24),
           suffixIcon: isPassword 
             ? IconButton(
                 icon: Icon(
                   obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined, 
-                  color: Colors.white38,
+                  color: theme.hintColor,
                 ),
                 onPressed: onToggle,
               )

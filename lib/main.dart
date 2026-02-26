@@ -1,11 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'screens/onboarding_flow_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/signup_screen.dart';
+
+import 'services/theme_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,21 +27,21 @@ class FitAssistApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'FitAssist',
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        primaryColor: Colors.blue.shade600,
-        scaffoldBackgroundColor: const Color(0xFF0F172A),
-      ),
-      home: const AuthWrapper(),
-      routes: {
-        '/login': (context) => const LoginScreen(),
-        '/signup': (context) => const SignupScreen(),
-        '/onboarding': (context) => const OnboardingFlowScreen(),
-        '/home': (context) => const HomeScreen(),
+    return ListenableBuilder(
+      listenable: ThemeManager(),
+      builder: (context, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'FitAssist',
+          theme: ThemeManager().currentTheme,
+          home: const AuthWrapper(),
+          routes: {
+            '/login': (context) => const LoginScreen(),
+            '/signup': (context) => const SignupScreen(),
+            '/onboarding': (context) => const OnboardingFlowScreen(),
+            '/home': (context) => const HomeScreen(),
+          },
+        );
       },
     );
   }
@@ -59,8 +62,26 @@ class AuthWrapper extends StatelessWidget {
         }
         
         if (snapshot.hasData) {
-          // If logged in, show onboarding flow (which will handle internal logic)
-          return const OnboardingFlowScreen();
+          final user = snapshot.data!;
+          return FutureBuilder<DocumentSnapshot>(
+            future: FirebaseFirestore.instance.collection('users').doc(user.uid).get(),
+            builder: (context, docSnapshot) {
+              if (docSnapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+              
+              if (docSnapshot.hasData && docSnapshot.data!.exists) {
+                final data = docSnapshot.data!.data() as Map<String, dynamic>?;
+                if (data != null && data['onboardingCompleted'] == true) {
+                  return const HomeScreen();
+                }
+              }
+              
+              return const OnboardingFlowScreen();
+            },
+          );
         }
         
         // Not logged in
